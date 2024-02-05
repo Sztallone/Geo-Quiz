@@ -1,9 +1,13 @@
 # user score calling, update
+import os
+# get the current folder path
+current_folder = os.path.dirname(os.path.abspath(__file__))
 
 def get_user_score(user_name):
 	# try to read txt, if doesnt exist, create it
 	try:
-		file = open('user_scores.txt', 'r')
+		# use the current folder path to open or rename files
+		file = open(os.path.join(current_folder, "user_scores.txt"), "r")
 	
 		for line in file:
 			content = line.split(', ')
@@ -18,22 +22,21 @@ def get_user_score(user_name):
 	except IOError:
 		
 		print('File not found. Creating file.')
-		file = open('user_scores.txt', 'w')
+		file = open(os.path.join(current_folder, "user_scores.txt"), "w")
 		file.close()
 		return '-1'
 
 def update_user_score(new_user, user_name, score):
-	from os import remove, rename 
 	# if new user, write name in file, else copy content to temp file to rewrite score
 	
 	if new_user == True:
-		file = open('user_scores.txt', 'a')
+		file = open(os.path.join(current_folder, "user_scores.txt"), 'a')
 		file.write(user_name + ', ' + score + '\n')
 		file.close()
 	
 	else:
-		temp_file = open('user_scores.tmp', 'w')
-		file = open('user_scores.txt', 'r')
+		temp_file = open(os.path.join(current_folder, "user_scores.tmp"), 'w')
+		file = open(os.path.join(current_folder, "user_scores.txt"), 'r')
 		
 		for line in file:
 			content = line.split(', ')
@@ -46,6 +49,8 @@ def update_user_score(new_user, user_name, score):
 		
 		file.close()
 		temp_file.close()
+		os.remove(os.path.join(current_folder, "user_scores.txt"))
+		os.rename(os.path.join(current_folder, "user_scores.tmp"), os.path.join(current_folder, "user_scores.txt"))
 		remove('user_scores.txt')
 		rename('user_scores.tmp', 'user_scores.txt')
 

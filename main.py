@@ -2,13 +2,28 @@ from file_handler import FileHandler, CountryData, EUData, CityData
 from question_maker import generate_question, print_choices_get_answer
 from gametasks import get_user_score, update_user_score
 import sys
-from decorators import exit_on_minus_one
-
+from decorators import trnslate_func, exit_on_minus_one, print_translate
+from language_select import change_language
 
 try:
-	print('\nWelcome to the Geo-Quiz game! In this game you will have to answer geographical questions about countries. \nEach correct answer gives you one mark.\nNo mark is deducted for wrong answers.\nType (-1) to exit whenever.\n')
+	# choose lang
+	lan = change_language()
 
-	print('Processing Data.\n')
+	# create function to use decors on input(). print() gets translated in decorators.py
+	@trnslate_func(lan)	# translator decorator
+	@exit_on_minus_one # exiter
+	def input_translate(prompt):
+		user_input = input(prompt)
+		return user_input
+	
+	@trnslate_func(lan)	# translator decorator with no exit
+	def input_translate_noexit(prompt):
+		user_input = input(prompt)
+		return user_input
+	
+	print_translate('\nWelcome to the Geo-Quiz game! In this game you will have to answer geographical questions about countries. \nEach correct answer gives you one mark.\nNo mark is deducted for wrong answers.\nType (-1) to exit whenever you like.\n', lan)
+
+	print_translate('Processing Data.\n', lan)
 	# Load csvs into DF, merge
 	try:
 		country_df = CountryData.read_file('country_data')
@@ -20,21 +35,14 @@ try:
 	except OSError:
 		sys.exit('Error during file handling!')
 	else:
-		print('Data loaded.\n')
-	
-	# create function to use decor on input()
-	@exit_on_minus_one
-	def get_input(user_instruction):
-		# func to get the value of an input func
-		user_input = input(user_instruction)
-		return user_input
+		print_translate('Data loaded.\n', lan)
 
 	# get username, score	
-	user_name = get_input('Hello! Please enter your name: ')
+	user_name = input_translate('Hello! Please enter your name:\n')
 
 	while True:
 		if user_name == '':
-			user_name = get_input('Please enter your name: ')
+			user_name = input_translate('Please enter your name: ')
 		else:
 			break
 
@@ -46,7 +54,7 @@ try:
 	else:
 		new_user = False
 	
-	print(f'Hi {user_name}, welcome. Your score is: {score}.\nPlease select a topic for your questions.')
+	print_translate(f'Hi {user_name}, welcome. Your score is: {score}.\nPlease select a topic for your questions.', lan)
 
 	user_choice = 0
 	
@@ -54,7 +62,7 @@ try:
 	while user_choice != '-1':
 		#prompt user to select Feature
 		
-		input_feature = get_input('\nChoose one of the following: \nLandmass (1) | Population (2) | Continent (3) | EU membership (4) | Capital (5) | Latitude of Capital (6) | Population of Capital (7) \n')
+		input_feature = input_translate('\nChoose one of the following: \nLandmass (1) | Population (2) | Continent (3) | EU membership (4) | Capital (5) | Latitude of Capital (6) | Population of Capital (7) \n')
 
 		valid_feature_answers = list(range(1, 8))
 		
@@ -66,17 +74,17 @@ try:
 						input_feature = int(input_feature)
 						break
 					else:
-						print('You did not enter a valid choice. Please try again.')
-						input_feature = get_input('Please write (1), (2), (3), (4), (5), (6) or (7): \n')
+						print_translate('You did not enter a valid choice. Please try again.', lan)
+						input_feature = input_translate('Please write (1), (2), (3), (4), (5), (6) or (7): \n')
 				except:
-						print('You did not enter a valid choice. Please try again.')
-						input_feature = get_input('Please write (1), (2), (3), (4), (5), (6) or (7): \n')
+						print_translate('You did not enter a valid choice. Please try again.', lan)
+						input_feature = input_translate('Please write (1), (2), (3), (4), (5), (6) or (7): \n')
 			except:
-				print('Not a valid number!')
-				input_feature = get_input('\nChoose one of the following: \nLandmass (1) | Population (2) | Continent (3) | EU membership (4) | Capital (5) | Latitude of Capital (6) | Population of Capital (7) \n')
+				print_translate('Not a valid number!', lan)
+				input_feature = input_translate('\nChoose one of the following: \nLandmass (1) | Population (2) | Continent (3) | EU membership (4) | Capital (5) | Latitude of Capital (6) | Population of Capital (7) \n')
 		
 		#prompt user for number of questions per game
-		number_prompt = get_input('How many questions do you want per game (1 to 10)?: \n')
+		number_prompt = input_translate('How many questions do you want per game (1 to 10)?: \n')
 	
 		# accept only numbers and modify answer
 		while True:
@@ -87,20 +95,20 @@ try:
 				else:
 					if no_of_questions < 1:
 						no_of_questions = 1
-						print('\nMinimum number of questions = 1')
-						print('Hence, number of questions will be set to 1')
+						print_translate('\nMinimum number of questions = 1', lan)
+						print_translate('Hence, number of questions will be set to 1', lan)
 						break
 					elif no_of_questions > 10:
 						no_of_questions = 10
-						print('\nMaximum number of questions = 10')
-						print('Hence, number of questions will be set to 10')
+						print_translate('\nMaximum number of questions = 10', lan)
+						print_translate('Hence, number of questions will be set to 10', lan)
 						break
 			except:
-				print('Not a valid number!')
-				number_prompt = get_input('How many questions do you want per game (1 to 10)?: \n')
+				print_translate('Not a valid number!', lan)
+				number_prompt = input_translate('How many questions do you want per game (1 to 10)?: \n')
 			
 		# Feature choices
-		
+		# pair integer userinput with col names
 		col_names_dict = {}
 		for i in valid_feature_answers:
 			col_names_dict[i] = full_data.columns[i + 1]
@@ -111,32 +119,25 @@ try:
 			question, unit, value, feature = generate_question(full_data, col_names_dict[input_feature])
 
 			# get player's answer and result
-			answer_letter, player_answer = print_choices_get_answer(full_data, question, unit, value, feature)
+			answer_letter, player_answer = print_choices_get_answer(full_data, question, unit, value, feature, lan)
 
 			if answer_letter == player_answer:
-				print('\nAnswer is correct!\n')
+				print_translate('Answer is correct!', lan)
 				score += 1
 			else:
-				print(f'\nAnswer is incorrect! The right answer is: {answer_letter}.\n')
+				print_translate(f'Answer is incorrect! The right answer is: {answer_letter}.', lan)
 		
 		#display updated score to user
-		print(f'Your current score : {score}')
+		print_translate(f'Your current score : {score}', lan)
 		#prompt user to enter a choice again and use it to update user_choice
-		user_choice = input('Press Enter to continue or (-1) to exit: ')
+		user_choice = input_translate_noexit('Press Enter to continue or (-1) to exit: ')
 		if user_choice == '-1':
-			print('\n\nThank you for playing!\n')
+			print_translate('\n\nThank you for playing!\n', lan)
 	
 	#update the user’s score after he/she exits the program
 	update_user_score(new_user, user_name, str(score))
 
 except Exception as e:
 	#inform users that an error has occurred and the program will
-	
-	print('An unknown error has occured. The program will exit.')
-	print('Error: ', e)
-
-
-# another way to exit 
-# except KeyboardInterrupt:
-# 	print('\n\nThank you for playing!')
-
+	print_translate('An unknown error has occured. The program will exit.', lan)
+	print_translate('Error: ' + str(e), lan)

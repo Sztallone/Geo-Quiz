@@ -44,9 +44,19 @@ def generate_question(dataframe, feature):
 	
 	return question, unit, value, feature
 
-def print_choices_get_answer(dataframe, question, unit, value, feature):
-		
+from decorators import trnslate_func, exit_on_minus_one, simple_translate, print_translate
+
+def print_choices_get_answer(dataframe, question, unit, value, feature, lan = 'en'):
+	import sys
+
 	choices = [value]
+
+	# set up decos inside function
+	@trnslate_func(lan)	# translator decorator
+	@exit_on_minus_one # exiter
+	def input_translate(prompt):
+		user_input = input(prompt)
+		return user_input
 
 	# build up choices w rand 
 	if feature != 'Latitude of Capital':
@@ -65,50 +75,83 @@ def print_choices_get_answer(dataframe, question, unit, value, feature):
 					choices.append(choice)
 		
 		random.shuffle(choices)
-		
+
+		if lan != 'en':
+		# make translated copy of choices for exact match later
+			translated_choices = [simple_translate(str(choice), lan) for choice in choices]
+
 		# select correct index and match with answer letter
 		answer_index = choices.index(value)
 
 		answer_letter = 'ABCD'[answer_index]
-		
-		print(question) # choices comma separated if number
+			
+		print_translate(question, lan) # choices comma separated if number
 		if type(choices[0]) == str or feature == 'EU membership':
-			print(f'A) {choices[0]:} {unit}')
-			print(f'B) {choices[1]:} {unit}')
-			print(f'C) {choices[2]:} {unit}')
-			print(f'D) {choices[3]:} {unit}')
+			print_translate(f'A) {choices[0]:} {unit}', lan)
+			print_translate(f'B) {choices[1]:} {unit}', lan)
+			print_translate(f'C) {choices[2]:} {unit}', lan)
+			print_translate(f'D) {choices[3]:} {unit}', lan)
 		else:
-			print(f'A) {choices[0]:,} {unit}')
-			print(f'B) {choices[1]:,} {unit}')
-			print(f'C) {choices[2]:,} {unit}')
-			print(f'D) {choices[3]:,} {unit}')
-		
+			print_translate(f'A) {choices[0]:,} {unit}', lan)
+			print_translate(f'B) {choices[1]:,} {unit}', lan)
+			print_translate(f'C) {choices[2]:,} {unit}', lan)
+			print_translate(f'D) {choices[3]:,} {unit}', lan)
+
 		# check player answers
 		while True:
-			player_answer = input('\nEnter your answer: ').upper()
+			player_answer = input_translate('\nEnter your answer: ').upper()
+			
+			# create cap_choices to check exact answers. if not EN, use translated versions of choices to pair
+			if lan == 'en':
+				capital_choices = [str(x).upper() for x in choices]
+			else:
+				capital_choices = [str(x).upper() for x in translated_choices]
+
 			if player_answer in ['A', 'B', 'C', 'D']:
 				break
+			# check if player types in the answer, designate w correct letters
+			elif player_answer in capital_choices:
+				player_answer_index = capital_choices.index(player_answer)
+				player_answer = 'ABCD'[player_answer_index]
+				break
+			elif player_answer == '-1':
+				sys.exit('You cancelled the program.')
 			else:
-				print('Not a valid answer!')
+				print_translate('Not a valid answer!', lan)
 
 	else:
+		# latitude question
 		choices = ['Northern', 'Southern']
+		
+		if lan != 'en':
+			translated_choices = [simple_translate('Northern', lan), simple_translate('Southern', lan)]
 
 		if value > 0:
 			answer_letter = 'A'
 		else:
 			answer_letter = 'B'
 
-		print(question)
-		print(f'A) {choices[0]}')
-		print(f'B) {choices[1]}')        
+		print_translate(question, lan)
+		print_translate(f'A) {choices[0]}', lan)
+		print_translate(f'B) {choices[1]}', lan)        
 	
 		while True:
-			player_answer = input('\nEnter your answer: ').upper()
+			player_answer = input_translate('\nEnter your answer: ').upper()
+			if lan == 'en':
+				capital_choices = [str(x).upper() for x in choices]
+			else:
+				capital_choices = [str(x).upper() for x in translated_choices]
+
 			if player_answer in ['A', 'B']:
 				break
+			elif player_answer in capital_choices:
+				player_answer_index = capital_choices.index(player_answer)
+				player_answer = 'AB'[player_answer_index]
+				break
+			# exit handled by decorator
+			# elif player_answer == '-1':
+			# 	sys.exit('You cancelled the program.')
 			else:
-				print('Not a valid answer!')
+				print_translate('Not a valid answer!', lan)
 
 	return answer_letter, player_answer
-		

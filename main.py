@@ -1,9 +1,10 @@
-from file_handler import FileHandler, CountryData, EUData, CityData
-from question_maker import generate_question, print_choices_get_answer
-from gametasks import get_user_score, update_user_score
 import sys
-from decorators import trnslate_func, exit_on_minus_one, print_translate
+
+from decorators import exit_on_minus_one, print_translate, trnslate_func
+from file_handler import CityData, CountryData, EUData, FileHandler
+from gametasks import get_user_score, update_user_score
 from language_select import change_language
+from question_maker import generate_question, print_choices_get_answer
 
 try:
 	# choose lang
